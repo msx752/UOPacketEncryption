@@ -14,14 +14,14 @@ namespace UoPacketEncryption
         public static void set_login_encryption()
         {
             m_crypt_mode = CryptMode.Login;
-            uoc.LogCrypt.init(LOGINKEY1_V2_0_3, LOGINKEY2_V2_0_3);
+            uoc.LogCrypt.Init(LOGINKEY1_V2_0_3, LOGINKEY2_V2_0_3);
         }
 
         //use this if packet first byte == 0x91  (ONCE)
         public static void set_game_encryption()
         {
             m_crypt_mode = CryptMode.Game;
-            uoc.GamCrypt.init();
+            uoc.GamCrypt.Init();
         }
 
         //use this if packet first byte == 0xC0  (ONCE)

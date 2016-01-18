@@ -31,47 +31,30 @@ namespace UoPacketEncryption
                     uint table0 = m_key[0];
                     uint table1 = m_key[1];
 
-                    m_key[1] =
-                      (
-                          (
-                              (
-                                  ((table1 >> 1) | (table0 << 31))
-                                  ^ m_k1
-                              )
-                              >> 1
-                          )
-                          | (table0 << 31)
-                      ) ^ m_k1;
+                    m_key[1] = (((((table1 >> 1) | (table0 << 31)) ^ m_k1) >> 1) | (table0 << 31)) ^ m_k1;
                     m_key[0] = ((table0 >> 1) | (table1 << 31)) ^ m_k2;
                 }
             }
 
-            public void init(uint k1, uint k2)
+            public void Init(uint k1, uint k2)
             {
                 byte[] biti = new byte[SEEDK.Length];
                 memCopy(SEEDK, ref biti, true);
                 uint seed = BitConverter.ToUInt32(biti, 0);
 
-                m_key[0] =
-             (((~seed) ^ 0x00001357) << 16)
-         | ((seed ^ 0xffffaaaa) & 0x0000ffff);
-                m_key[1] =
-                        ((seed ^ 0x43210000) >> 16)
-                    | (((~seed) ^ 0xabcdffff) & 0xffff0000);
+                m_key[0] = (((~seed) ^ 0x00001357) << 16) | ((seed ^ 0xffffaaaa) & 0x0000ffff);
+                m_key[1] = ((seed ^ 0x43210000) >> 16) | (((~seed) ^ 0xabcdffff) & 0xffff0000);
                 m_k1 = k1;
                 m_k2 = k2;
             }
         }
 
-        public static void ROUND(ref uint LL, uint R, uint[] S, uint P)
+        public static void Round(ref uint LL, uint R, uint[] S, uint P)
         {
-            LL = (LL) ^
-                (P) ^
-                ((S[(R) >> 24] + S[0x0100 + (((R) >> 16) & 0xff)]) ^
-                S[0x0200 + (((R) >> 8) & 0xff)]) + S[0x0300 + ((R) & 0xff)];
+            LL = (LL) ^ (P) ^ ((S[(R) >> 24] + S[0x0100 + (((R) >> 16) & 0xff)]) ^ S[0x0200 + (((R) >> 8) & 0xff)]) + S[0x0300 + ((R) & 0xff)];
         }
 
-        public static void memCopy(uint[] source, ref byte[] destination, bool ters)
+        public static void memCopy(uint[] source, ref byte[] destination, bool reverse)
         {
             int ssize = sizeof(uint);//4
             byte[] biti = new byte[source.Length * ssize];
@@ -86,7 +69,7 @@ namespace UoPacketEncryption
                 i += 3;
             }
             biti = newb.ToArray();
-            if (ters)
+            if (reverse)
             {
                 Array.Reverse(biti);
             }
@@ -436,14 +419,14 @@ namespace UoPacketEncryption
                     s_table[i] = new uint[1024];
                 }
 
-                init_tables();
-                Seed_Table_Olustur();
+                InitTables();
+                GenerateSeedTable();
             }
 
-            public void init()
+            public void Init()
             {
                 if (!m_tables_ready)
-                    init_tables();
+                    InitTables();
 
                 m_table_index = CRYPT_GAMETABLE_START;
                 uint[] array_seed = new uint[8];
@@ -462,10 +445,7 @@ namespace UoPacketEncryption
                 }
             }
 
-            /// <summary>
-            /// good working
-            /// </summary>
-            public void init_tables()
+            public void InitTables()
             {
                 for (int key_index = 0; key_index < CRYPT_GAMEKEY_COUNT - 1; key_index++)
                 {
@@ -489,27 +469,19 @@ namespace UoPacketEncryption
                                 //getting members
                                 uint mask = *pkey++;
                                 if (pkey->ToString() == "0")
-                                {
                                     pkey = recent;//start point configurating and array queu setting zero
-                                }
 
                                 mask = ((mask << 8) | *pkey++);
                                 if (pkey->ToString() == "0")
-                                {
                                     pkey = recent;
-                                }
 
                                 mask = ((mask << 8) | *pkey++);
                                 if (pkey->ToString() == "0")
-                                {
                                     pkey = recent;
-                                }
 
                                 mask = ((mask << 8) | *pkey++);
                                 if (pkey->ToString() == "0")
-                                {
                                     pkey = recent;
-                                }
 
                                 p_table[key_index][i] ^= mask;
                             }
@@ -518,7 +490,7 @@ namespace UoPacketEncryption
 
                             for (i = 0; i < 18; i += 2)
                             {
-                                raw_encrypt(ref value, key_index);
+                                RawEncrypt(ref value, key_index);
                                 // replace P1 and P2 with the output of the encryption.
                                 p_table[key_index][i] = value[0];
                                 p_table[key_index][i + 1] = value[1];
@@ -528,7 +500,7 @@ namespace UoPacketEncryption
                             // Repeat with the S-boxes
                             for (i = 0; i < 1024; i += 2)
                             {
-                                raw_encrypt(ref value, key_index);
+                                RawEncrypt(ref value, key_index);
                                 s_table[key_index][i] = value[0];
                                 s_table[key_index][i + 1] = value[1];
                             }
@@ -538,47 +510,42 @@ namespace UoPacketEncryption
                 m_tables_ready = true;
             }
 
-            /// <summary>
-            /// good working
-            /// </summary>
-            /// <param name="values"></param>
-            /// <param name="table"></param>
-            public void raw_encrypt(ref uint[] values, int table)
+            public void RawEncrypt(ref uint[] values, int table)
             {
                 uint left = values[0];
                 uint right = values[1];
 
                 left ^= p_table[table][0];
-                ROUND(ref right, left, s_table[table], p_table[table][1]);
-                ROUND(ref left, right, s_table[table], p_table[table][2]);
-                ROUND(ref right, left, s_table[table], p_table[table][3]);
-                ROUND(ref left, right, s_table[table], p_table[table][4]);
-                ROUND(ref right, left, s_table[table], p_table[table][5]);
-                ROUND(ref left, right, s_table[table], p_table[table][6]);
-                ROUND(ref right, left, s_table[table], p_table[table][7]);
-                ROUND(ref left, right, s_table[table], p_table[table][8]);
-                ROUND(ref right, left, s_table[table], p_table[table][9]);
-                ROUND(ref left, right, s_table[table], p_table[table][10]);
-                ROUND(ref right, left, s_table[table], p_table[table][11]);
-                ROUND(ref left, right, s_table[table], p_table[table][12]);
-                ROUND(ref right, left, s_table[table], p_table[table][13]);
-                ROUND(ref left, right, s_table[table], p_table[table][14]);
-                ROUND(ref right, left, s_table[table], p_table[table][15]);
-                ROUND(ref left, right, s_table[table], p_table[table][16]);
+                Round(ref right, left, s_table[table], p_table[table][1]);
+                Round(ref left, right, s_table[table], p_table[table][2]);
+                Round(ref right, left, s_table[table], p_table[table][3]);
+                Round(ref left, right, s_table[table], p_table[table][4]);
+                Round(ref right, left, s_table[table], p_table[table][5]);
+                Round(ref left, right, s_table[table], p_table[table][6]);
+                Round(ref right, left, s_table[table], p_table[table][7]);
+                Round(ref left, right, s_table[table], p_table[table][8]);
+                Round(ref right, left, s_table[table], p_table[table][9]);
+                Round(ref left, right, s_table[table], p_table[table][10]);
+                Round(ref right, left, s_table[table], p_table[table][11]);
+                Round(ref left, right, s_table[table], p_table[table][12]);
+                Round(ref right, left, s_table[table], p_table[table][13]);
+                Round(ref left, right, s_table[table], p_table[table][14]);
+                Round(ref right, left, s_table[table], p_table[table][15]);
+                Round(ref left, right, s_table[table], p_table[table][16]);
                 right ^= p_table[table][17];
 
                 values[1] = left;
                 values[0] = right;
             }
 
-            public void decrypt(uint[] @in, uint[] @out, int len)
+            public void Decrypt(uint[] @in, uint[] @out, int len)
             {
                 // 2.0.0 did not use encryption
                 if (@in != @out)
                     Array.Copy(@in, @out, len);
             }
 
-            public void encrypt(byte[] @in, ref byte[] @out, int len)
+            public void Encrypt(byte[] @in, ref byte[] @out, int len)
             {
                 for (int i = 0; i < len; i++)
                 {
@@ -590,7 +557,7 @@ namespace UoPacketEncryption
                         values[0] = BitConverter.ToUInt32(seed, 0);
                         values[1] = BitConverter.ToUInt32(seed, 0);
 
-                        raw_encrypt(ref values, m_table_index);
+                        RawEncrypt(ref values, m_table_index);
 
                         //byte[] byte_array_seed = BitConverter.GetBytes(values[0]);
                         //for (int isf = 0; isf < 4; isf++)
@@ -612,7 +579,7 @@ namespace UoPacketEncryption
                 }
             }
 
-            public void Seed_Table_Olustur()
+            public void GenerateSeedTable()
             {
                 //generating array []
                 //example: seed[0] ,seed[1]
