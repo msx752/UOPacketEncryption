@@ -1,21 +1,12 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace UltimaXNA.PacketEncryption
+namespace UoPacketEncryption
 {
     public unsafe class UOCrypt
     {
-        ///
-
-        //// Members of OldGameCrypt class:
-        // Hexadecimal digits of pi
         public LoginCrypt LogCrypt = null;
-
         public OldGameCrypt GamCrypt = null;
 
         public UOCrypt()
@@ -104,7 +95,7 @@ namespace UltimaXNA.PacketEncryption
 
         public unsafe class OldGameCrypt
         {
-            #region eften püften
+            #region Other Veriables
 
             //lenght:18
             public uint[] p_box = new uint[]
@@ -425,12 +416,11 @@ namespace UltimaXNA.PacketEncryption
             public int CRYPT_GAMETABLE_MODULO = 11;
             public int CRYPT_GAMESEED_LENGTH = 8;
             public int CRYPT_GAMETABLE_START = 1;
-            public byte[] m_seed = new byte[8];//CRYPT_GAMESEED_LENGTH
+            public byte[] m_seed = new byte[8];//CRYPT_GAMESEED_LENGTH (always: 8)
             public int m_table_index = 0;
             public int m_block_pos = 0;
-            //public int m_stream_pos = 0;
 
-            #endregion eften püften
+            #endregion Other Veriables
 
             public OldGameCrypt()
             {
@@ -459,13 +449,11 @@ namespace UltimaXNA.PacketEncryption
                 uint[] array_seed = new uint[8];
                 Array.Copy(g_seed_table[0][m_table_index][0], array_seed, CRYPT_GAMESEED_LENGTH);
                 memCopy(array_seed, ref m_seed, false);
-                //158-236-91,60,143,168,140,85
-                //m_stream_pos = 0;
+                //158-236-91,60,143,168,140,85  //(example seed)
                 m_block_pos = 0;
             }
 
-            //c++ memcpy() aynı işlem
-            //c++ memcpy() aynı işlem
+            //c++ memcpy() similar function
             public void memcpy(ref uint[] distance, uint[] source, int source_size)
             {
                 for (int i = 0; i < source_size; i++)
@@ -475,7 +463,7 @@ namespace UltimaXNA.PacketEncryption
             }
 
             /// <summary>
-            /// sounsuz çalışıyor
+            /// good working
             /// </summary>
             public void init_tables()
             {
@@ -490,21 +478,19 @@ namespace UltimaXNA.PacketEncryption
                     {
                         fixed (void* ppKEY = g_key_table[key_index])
                         {
-                            //başlangıç point yedek alınıyor
+                            //saving start point
                             byte* recent = (byte*)ppKEY;
-                            //başlangıc point
+                            //start point
                             byte* pkey = (byte*)ppKEY;
-                            ////buna gerek kalmadı 6 eleman bitince 0 döndürüyor çünki
-                            ////byte* pkey_end = (byte*)ppKEY_END;
+                            ////byte* pkey_end = (byte*)ppKEY_END;  ///i dont need because after six members, it returns ZERO
 
                             for (i = 0; i < 18; i++)
                             {
-                                //elemanlar alınıyor
+                                //getting members
                                 uint mask = *pkey++;
                                 if (pkey->ToString() == "0")
                                 {
-                                    // başlangıç point ayarlanıyor dize sırası 0 oluyor.
-                                    pkey = recent;
+                                    pkey = recent;//start point configurating and array queu setting zero
                                 }
 
                                 mask = ((mask << 8) | *pkey++);
@@ -528,17 +514,15 @@ namespace UltimaXNA.PacketEncryption
                                 p_table[key_index][i] ^= mask;
                             }
 
-                            // Encrypt the all-zero string with Blowfish, using the key just
-                            // generated.
-                            uint[] value = { 0, 0 };
+                            uint[] value = { 0, 0 }; // Encrypt the all-zero string with Blowfish, using the key just generated
 
                             for (i = 0; i < 18; i += 2)
                             {
                                 raw_encrypt(ref value, key_index);
-                                // Replace P1 and P2 with the output of the encryption.
+                                // replace P1 and P2 with the output of the encryption.
                                 p_table[key_index][i] = value[0];
                                 p_table[key_index][i + 1] = value[1];
-                                // Repeat for the whole P-array
+                                // repeat for the whole P-array
                             }
 
                             // Repeat with the S-boxes
@@ -555,7 +539,7 @@ namespace UltimaXNA.PacketEncryption
             }
 
             /// <summary>
-            /// sorunsuz çalışıyor
+            /// good working
             /// </summary>
             /// <param name="values"></param>
             /// <param name="table"></param>
@@ -630,23 +614,23 @@ namespace UltimaXNA.PacketEncryption
 
             public void Seed_Table_Olustur()
             {
-                //burada önce 1 li dize oluşturuluyor
-                //örn: seed[0] ,seed[1]
+                //generating array []
+                //example: seed[0] ,seed[1]
                 g_seed_table = new List<List<byte[][]>>(2);
 
-                //burada önce 2 li dize oluşturuluyor
-                g_seed_table.Add(new List<byte[][]>());//örn: seed[0][0]
-                g_seed_table.Add(new List<byte[][]>());//örn: seed[1][0]
+                //generating array [][]
+                g_seed_table.Add(new List<byte[][]>());//example: seed[0][0]
+                g_seed_table.Add(new List<byte[][]>());//example: seed[1][0]
 
-                ////oluşturulan her 2 li dize içine bir 2 li dize daha oluituruyoruz etti 4 [][][][]
+                ////generating array  [][][][]
 
                 for (int i = 0; i < 26; i++)
                 {
-                    g_seed_table[0].Add(new byte[2][]);//örn:seed[0][0][0][0] | seed[0][0][0][1]
-                    g_seed_table[1].Add(new byte[2][]);//örn:seed[1][0][0][0] | seed[1][0][0][1]
+                    g_seed_table[0].Add(new byte[2][]);//example:seed[0][0][0][0] | seed[0][0][0][1]
+                    g_seed_table[1].Add(new byte[2][]);//example:seed[1][0][0][0] | seed[1][0][0][1]
                 }
 
-                //oluşturulan dizelere deger atanıyor
+                //adding values into arraylist
                 g_seed_table[0][0][0] = new byte[] { 0x9E, 0xEC, 0x5B, 0x3C, 0x8F, 0xA8, 0x8C, 0x55 };
                 g_seed_table[0][0][1] = new byte[] { 0xB6, 0x21, 0x71, 0x98, 0xA4, 0x47, 0x22, 0x58 };
 

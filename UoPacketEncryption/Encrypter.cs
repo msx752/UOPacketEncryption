@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
-namespace UltimaXNA.PacketEncryption
+namespace UoPacketEncryption
 {
     public static class Encrypter
     {
@@ -11,19 +8,19 @@ namespace UltimaXNA.PacketEncryption
 
         private static uint LOGINKEY1_V2_0_3 = 0x2DBBB7CD;
         private static uint LOGINKEY2_V2_0_3 = 0xA3C95E7F;
-        public static CryptMode m_crypt_mode = CryptMode.CRYPT_NONE;
+        public static CryptMode m_crypt_mode = CryptMode.None;
 
         //use this if packet first byte == 0x80  (ONCE)
         public static void set_login_encryption()
         {
-            m_crypt_mode = CryptMode.CRYPT_LOGIN;
+            m_crypt_mode = CryptMode.Login;
             uoc.LogCrypt.init(LOGINKEY1_V2_0_3, LOGINKEY2_V2_0_3);
         }
 
         //use this if packet first byte == 0x91  (ONCE)
         public static void set_game_encryption()
         {
-            m_crypt_mode = CryptMode.CRYPT_GAME;
+            m_crypt_mode = CryptMode.Game;
             uoc.GamCrypt.init();
         }
 
