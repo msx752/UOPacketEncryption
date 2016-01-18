@@ -1,4 +1,4 @@
-# UOP acket Encryption
+# UO Packet Encryption
 Ultima Online game packet encryption class
 
 Source -> http://necrotoolz.sourceforge.net/kairpacketguide/encryption.htm
