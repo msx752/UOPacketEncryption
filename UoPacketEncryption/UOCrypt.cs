@@ -22,11 +22,11 @@ namespace UoPacketEncryption
             public uint m_k1 = new byte();
             public uint m_k2 = new byte();
 
-            public void encrypt(Byte[] In, ref Byte[] Out, int len)
+            public void encrypt(Byte[] @in, ref Byte[] @out, int len)
             {
                 for (int i = 0; i < len; i++)
                 {
-                    Out[i] = (byte)(m_key[0] ^ Convert.ToUInt32(In[i]));
+                    @out[i] = (byte)(m_key[0] ^ Convert.ToUInt32(@in[i]));
 
                     uint table0 = m_key[0];
                     uint table1 = m_key[1];
@@ -538,14 +538,14 @@ namespace UoPacketEncryption
                 values[0] = right;
             }
 
-            public void Decrypt(uint[] In, uint[] Out, int len)
+            public void Decrypt(uint[] @in, uint[] @out, int len)
             {
                 // 2.0.0 did not use encryption
-                if (In != Out)
-                    Array.Copy(In, Out, len);
+                if (@in != @out)
+                    Array.Copy(@in, @out, len);
             }
 
-            public void Encrypt(byte[] In, ref byte[] Out, int len)
+            public void Encrypt(byte[] @in, ref byte[] @out, int len)
             {
                 for (int i = 0; i < len; i++)
                 {
@@ -572,9 +572,9 @@ namespace UoPacketEncryption
                     }
 
                     // CFB (Cipher FeedBack) encrypt
-                    Out[i] = (byte)(In[i] ^ m_seed[m_block_pos]);
+                    @out[i] = (byte)(@in[i] ^ m_seed[m_block_pos]);
 
-                    m_seed[m_block_pos] = Out[i];
+                    m_seed[m_block_pos] = @out[i];
                     m_block_pos = (m_block_pos + 1) % 8;
                 }
             }
